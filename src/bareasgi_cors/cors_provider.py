@@ -36,10 +36,20 @@ class CORSMiddleware:
         allow_methods: Optional[AbstractSet[str]] = None,
         allow_headers: Optional[AbstractSet[str]] = None,
         allow_credentials: bool = False,
-        allow_origin_regex: str = None,
-        expose_headers: AbstractSet[str] = (),
+        allow_origin_regex: Optional[str] = None,
+        expose_headers: AbstractSet[str] = None,
         max_age: int = 600,
     ) -> None:
+        """Construct the CORS middleware
+
+        :param allow_origins: An optional set of the allowed origins, or None for any origin.
+        :param allow_methods: An optional set of allowed methods, or None for all methods.
+        :param allow_headers: An optional set of allowed headers, or None for all headers.
+        :param allow_credentials: If True allow credentials, otherwise disallow.
+        :param allow_origin_regex: An optional regex pattern to apply to origins.
+        :param an optional set of headers to expose.
+        :param max_age: The maximum age in seconds. Defaults to ten minutes.
+        """
 
         self.allow_methods = allow_methods if allow_methods is not None else ALL_METHODS
 
@@ -81,33 +91,12 @@ class CORSMiddleware:
 
         self.allow_origin_regex = compiled_allow_origin_regex
 
-    async def __call__(
-            self,
-            scope: Scope,
-            info: Info,
-            matches: RouteMatches,
-            content: Content,
-            handler: HttpRequestCallback
-    ) -> HttpResponse:
-        headers = headers_to_dict(scope['headers'])
-
-        if ORIGIN not in headers:
-            return await handler(scope, info, matches, content)
-
-        if scope["method"] == "OPTIONS" and ACCESS_CONTROL_REQUEST_METHOD in headers:
-            return self.preflight_response(headers)
-        else:
-            return await self.simple_response(scope, info, matches, content, handler)
-
-    def preflight_response(
-            self,
-            request_header_map: Mapping[bytes, List[bytes]]
-    ) -> HttpResponse:
+    def _preflight_check(self, request_header_map: Mapping[bytes, List[bytes]]) -> HttpResponse:
         response_headers: List[Header] = list(self.preflight_headers)
-        failures = []
+        errors = []
 
         requested_origin = request_header_map[ORIGIN][0]
-        if self.is_allowed_origin(origin=requested_origin):
+        if self._is_allowed_origin(origin=requested_origin):
             if not self.allow_all_origins:
                 # If self.allow_all_origins is True, then the "Access-Control-Allow-Origin"
                 # header is already set to "*".
@@ -115,11 +104,11 @@ class CORSMiddleware:
                 # the Origin header in the response.
                 upsert_header(response_headers, ACCESS_CONTROL_ALLOW_ORIGIN, requested_origin)
         else:
-            failures.append("origin")
+            errors.append("origin")
 
         requested_method = request_header_map[ACCESS_CONTROL_REQUEST_METHOD][0]
         if requested_method.decode() not in self.allow_methods:
-            failures.append("method")
+            errors.append("method")
 
         # If we allow all headers, then we have to mirror back any requested
         # headers in the response.
@@ -130,17 +119,17 @@ class CORSMiddleware:
             else:
                 for header in access_control_request_header.decode().split(","):
                     if header.strip() not in self.allow_headers:
-                        failures.append("headers")
+                        errors.append("headers")
 
         # We don't strictly need to use 400 responses here, since its up to
         # the browser to enforce the CORS policy, but its more informative
         # if we do.
-        if failures:
-            return 400, response_headers, text_writer("disallowed CORS " + ", ".join(failures))
+        if errors:
+            return 400, response_headers, text_writer("disallowed CORS " + ", ".join(errors))
 
         return 200, response_headers, text_writer("OK")
 
-    def is_allowed_origin(self, origin: bytes) -> bool:
+    def _is_allowed_origin(self, origin: bytes) -> bool:
         if self.allow_all_origins:
             return True
 
@@ -150,7 +139,7 @@ class CORSMiddleware:
 
         return origin_str in self.allow_origins
 
-    async def simple_response(
+    async def _simple_response(
             self,
             scope: Scope,
             info: Info,
@@ -174,7 +163,7 @@ class CORSMiddleware:
 
         # If we only allow specific origins, then we have to mirror back
         # the Origin header in the response.
-        elif not self.allow_all_origins and self.is_allowed_origin(origin=origin):
+        elif not self.allow_all_origins and self._is_allowed_origin(origin=origin):
             upsert_header(response_headers, ACCESS_CONTROL_ALLOW_ORIGIN, origin)
             vary_values = find_header_value(response_headers, VARY)
             if not vary_values:
@@ -186,3 +175,21 @@ class CORSMiddleware:
             upsert_header(response_headers, *header)
 
         return response_status, response_headers, response_body
+
+    async def __call__(
+            self,
+            scope: Scope,
+            info: Info,
+            matches: RouteMatches,
+            content: Content,
+            handler: HttpRequestCallback
+    ) -> HttpResponse:
+        headers = headers_to_dict(scope['headers'])
+
+        if ORIGIN not in headers:
+            return await handler(scope, info, matches, content)
+
+        if scope["method"] == "OPTIONS" and ACCESS_CONTROL_REQUEST_METHOD in headers:
+            return self._preflight_check(headers)
+
+        return await self._simple_response(scope, info, matches, content, handler)
