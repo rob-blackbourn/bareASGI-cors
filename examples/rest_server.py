@@ -27,7 +27,7 @@ async def set_info(scope: Scope, info: Info, matches: RouteMatches, content: Con
 if __name__ == "__main__":
     import uvicorn
 
-    cors_middleware = CORSMiddleware(allow_origins='*', allow_methods=('GET', 'POST'), allow_headers=('*'))
+    cors_middleware = CORSMiddleware()
 
     app = Application(info={'name': 'Michael Caine'}, middlewares=[cors_middleware])
 

@@ -1,0 +1,28 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="15">
+            <item index="0" class="java.lang.String" itemvalue="graphql-ws-next" />
+            <item index="1" class="java.lang.String" itemvalue="stringcase" />
+            <item index="2" class="java.lang.String" itemvalue="aiodns" />
+            <item index="3" class="java.lang.String" itemvalue="bhdg-aiohttp" />
+            <item index="4" class="java.lang.String" itemvalue="bhdg-graphql" />
+            <item index="5" class="java.lang.String" itemvalue="ammoo" />
+            <item index="6" class="java.lang.String" itemvalue="bhdg-pmp" />
+            <item index="7" class="java.lang.String" itemvalue="aiohttp-cors" />
+            <item index="8" class="java.lang.String" itemvalue="easydict" />
+            <item index="9" class="java.lang.String" itemvalue="aiohttp" />
+            <item index="10" class="java.lang.String" itemvalue="bhdg-yaml" />
+            <item index="11" class="java.lang.String" itemvalue="cchardet" />
+            <item index="12" class="java.lang.String" itemvalue="GraphQL-core-next" />
+            <item index="13" class="java.lang.String" itemvalue="bhdg-rabbitmqmon" />
+            <item index="14" class="java.lang.String" itemvalue="bhdg-utils" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

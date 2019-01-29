@@ -1,4 +1,4 @@
-from typing import List, Sequence, Mapping
+from typing import List, Mapping, AbstractSet, Optional
 import re
 from bareasgi import text_writer
 from bareasgi.types import (
@@ -12,7 +12,7 @@ from bareasgi.types import (
 )
 from .headers import find_header_value, headers_to_dict, upsert_header
 
-ALL_METHODS = ("DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT")
+ALL_METHODS = {"DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"}
 
 ACCESS_CONTROL_ALLOW_CREDENTIALS = b"access-control-allow-credentials"
 ACCESS_CONTROL_ALLOW_HEADERS = b"access-control-allow-headers"
@@ -31,47 +31,54 @@ class CORSMiddleware:
 
     def __init__(
         self,
-        allow_origins: Sequence[str] = (),
-        allow_methods: Sequence[str] = ("GET",),
-        allow_headers: Sequence[str] = (),
+        *,
+        allow_origins: Optional[AbstractSet[str]] = None,
+        allow_methods: Optional[AbstractSet[str]] = None,
+        allow_headers: Optional[AbstractSet[str]] = None,
         allow_credentials: bool = False,
         allow_origin_regex: str = None,
-        expose_headers: Sequence[str] = (),
+        expose_headers: AbstractSet[str] = (),
         max_age: int = 600,
     ) -> None:
 
-        if "*" in allow_methods:
-            allow_methods = ALL_METHODS
+        self.allow_methods = allow_methods if allow_methods is not None else ALL_METHODS
 
         compiled_allow_origin_regex = None
         if allow_origin_regex is not None:
             compiled_allow_origin_regex = re.compile(allow_origin_regex)
 
         self.simple_headers: List[Header] = []
-        if "*" in allow_origins:
+        self.allow_all_origins = allow_origins is None
+        if self.allow_all_origins:
+            self.allow_origins = None
             self.simple_headers.append((ACCESS_CONTROL_ALLOW_ORIGIN, b"*"))
+        else:
+            self.allow_origins = allow_origins
+
         if allow_credentials:
             self.simple_headers.append((ACCESS_CONTROL_ALLOW_CREDENTIALS, b"true"))
+
         if expose_headers:
             self.simple_headers.append((ACCESS_CONTROL_EXPOSE_HEADERS, ", ".join(expose_headers).encode()))
 
         self.preflight_headers: List[Header] = []
-        if "*" in allow_origins:
+        if self.allow_all_origins:
             self.preflight_headers.append((ACCESS_CONTROL_ALLOW_ORIGIN, b"*"))
         else:
             self.preflight_headers.append((VARY, b"Origin"))
-            self.preflight_headers.append((ACCESS_CONTROL_ALLOW_METHODS, ", ".join(allow_methods).encode()))
+            self.preflight_headers.append((ACCESS_CONTROL_ALLOW_METHODS, ", ".join(self.allow_methods).encode()))
             self.preflight_headers.append((ACCESS_CONTROL_MAX_AGE, str(max_age).encode()))
-        if allow_headers and "*" not in allow_headers:
+
+        self.allow_all_headers = allow_headers is None
+        if self.allow_all_headers:
+            self.allow_headers = None
+        else:
+            self.allow_headers = allow_headers
             self.preflight_headers.append((ACCESS_CONTROL_ALLOW_HEADERS, ", ".join(allow_headers).encode()))
+
         if allow_credentials:
             self.preflight_headers.append((ACCESS_CONTROL_ALLOW_CREDENTIALS, b"true"))
 
-        self.allow_origins = allow_origins
-        self.allow_methods = allow_methods
-        self.allow_headers = allow_headers
-        self.allow_all_origins = "*" in allow_origins
-        self.allow_all_headers = "*" in allow_headers
         self.allow_origin_regex = compiled_allow_origin_regex
 
     async def __call__(
@@ -157,7 +164,6 @@ class CORSMiddleware:
         response_status, response_headers, response_body = await handler(scope, info, matches, content)
         if response_headers is None:
             response_headers = []
-
 
         origin = find_header_value(request_headers, ORIGIN)
 

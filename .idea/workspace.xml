@@ -2,10 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="99e571a9-338a-4a04-ae5a-7b1257643c0b" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/rest_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/rest_server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/web_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/web_server.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/bareasgi_cors/cors_provider.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/bareasgi_cors/cors_provider.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/bareasgi_cors/headers.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/bareasgi_cors/headers.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -18,8 +17,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/bareasgi_cors/cors_provider.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="71">
-              <caret line="90" column="19" selection-start-line="90" selection-start-column="19" selection-end-line="90" selection-end-column="19" />
+            <state relative-caret-position="239">
+              <caret line="76" selection-start-line="76" selection-end-line="76" />
               <folding>
                 <element signature="e#0#42#0" expanded="true" />
               </folding>
@@ -31,7 +30,7 @@
         <entry file="file://$PROJECT_DIR$/src/bareasgi_cors/headers.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="231">
-              <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
+              <caret line="56" selection-start-line="56" selection-end-line="56" />
               <folding>
                 <element signature="e#294#312#0" expanded="true" />
               </folding>
@@ -51,8 +50,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/examples/rest_server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="386">
-              <caret line="29" column="104" selection-start-line="29" selection-start-column="104" selection-end-line="29" selection-end-column="104" />
+            <state relative-caret-position="435">
+              <caret line="29" column="37" selection-start-line="29" selection-start-column="37" selection-end-line="29" selection-end-column="37" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -113,6 +112,7 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>allow_origins</find>
+      <find>allo_all</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -130,8 +130,8 @@
         <option value="$PROJECT_DIR$/setup.py" />
         <option value="$PROJECT_DIR$/src/bareasgi_cors/__init__.py" />
         <option value="$PROJECT_DIR$/src/bareasgi_cors/headers.py" />
-        <option value="$PROJECT_DIR$/examples/rest_server.py" />
         <option value="$PROJECT_DIR$/examples/web_server.py" />
+        <option value="$PROJECT_DIR$/examples/rest_server.py" />
         <option value="$PROJECT_DIR$/src/bareasgi_cors/cors_provider.py" />
       </list>
     </option>
@@ -263,7 +263,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.rest_server">
+  <component name="RunManager" selected="Python.web_server">
     <configuration name="rest_server" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="bareasgi_cors" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -308,8 +308,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.rest_server" />
         <item itemvalue="Python.web_server" />
+        <item itemvalue="Python.rest_server" />
       </list>
     </recent_temporary>
   </component>
@@ -330,12 +330,12 @@
     <frame x="1920" y="0" width="1920" height="1200" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2628205" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2628205" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.32981783" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.32981783" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4928092" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -357,7 +357,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/bareasgi_cors/cors_provider.py</url>
-          <line>84</line>
+          <line>91</line>
           <option name="timeStamp" value="15" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -372,17 +372,17 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/bareasgi_cors/cors_provider.py</url>
-          <line>98</line>
+          <line>105</line>
           <option name="timeStamp" value="18" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/bareasgi_cors/cors_provider.py</url>
-          <line>154</line>
+          <line>161</line>
           <option name="timeStamp" value="19" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/bareasgi_cors/cors_provider.py</url>
-          <line>157</line>
+          <line>164</line>
           <option name="timeStamp" value="20" />
         </line-breakpoint>
       </breakpoints>
@@ -491,7 +491,7 @@
     <entry file="file://$PROJECT_DIR$/src/bareasgi_cors/headers.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="231">
-          <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
+          <caret line="56" selection-start-line="56" selection-end-line="56" />
           <folding>
             <element signature="e#294#312#0" expanded="true" />
           </folding>
@@ -517,8 +517,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/examples/rest_server.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="386">
-          <caret line="29" column="104" selection-start-line="29" selection-start-column="104" selection-end-line="29" selection-end-column="104" />
+        <state relative-caret-position="435">
+          <caret line="29" column="37" selection-start-line="29" selection-start-column="37" selection-end-line="29" selection-end-column="37" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
@@ -527,8 +527,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/bareasgi_cors/cors_provider.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="71">
-          <caret line="90" column="19" selection-start-line="90" selection-start-column="19" selection-end-line="90" selection-end-column="19" />
+        <state relative-caret-position="239">
+          <caret line="76" selection-start-line="76" selection-end-line="76" />
           <folding>
             <element signature="e#0#42#0" expanded="true" />
           </folding>
