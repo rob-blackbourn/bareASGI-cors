@@ -7,7 +7,7 @@ but the order of the values must be.
 """
 
 import collections
-from typing import Optional, Mapping, List, Any
+from typing import Optional, MutableMapping, List, Any
 from bareasgi.types import Header
 
 
@@ -41,7 +41,7 @@ def find_header_value(headers: List[Header], name: bytes) -> Optional[Any]:
         return None
 
 
-def headers_to_dict(headers: List[Header]) -> Mapping[bytes, List[bytes]]:
+def headers_to_dict(headers: List[Header]) -> MutableMapping[bytes, List[bytes]]:
     """Convert a list of headers into a dictionary where the key is the header name and the value is a list of the
     values of the headers for that name
 
@@ -49,14 +49,15 @@ def headers_to_dict(headers: List[Header]) -> Mapping[bytes, List[bytes]]:
     :return: A dictionary where the key is the header name and the value is a list of the values of the headers for that
         name
     """
-    items = collections.defaultdict(list)
+    items: MutableMapping[bytes, List[bytes]] = collections.defaultdict(list)
     for name, value in headers:
-        items[name] = value
+        items[name].append(value)
     return items
+
 
 def upsert_header(headers: List[Header], name: bytes, value: bytes):
     for i in range(len(headers)):
         if headers[i][0] == name:
-            headers[i][1] = value
+            headers[i] = (name, value)
             return
     headers.append((name, value))

@@ -19,17 +19,37 @@ async def http_request_callback(scope: Scope, info: Info, matches: RouteMatches,
     <title>Web Server</title>
   </head>
   <body>
-    Info: <span id='info'></span>
+    <form>
+        Info: <input name='info' type='text' id='info'><br />
+        <button type='button' onclick='postInfo()'>Post</button>
+    </form>
     
     <script>
+      function postInfo() {
+        const element = document.getElementById('info');
+        const data = { name: element.value };
+
+        fetch('http://127.0.0.1:9010/info', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+          .then(function(response) {
+            console.log(response);
+            return Promise.resolve('Done');
+          });
+      }
+      
       window.onload = function() {
         fetch('http://127.0.0.1:9010/info')
           .then(function(response) {
             return response.json();
           })
           .then(function(info) {
-            span = document.getElementById('info');
-            span.textContent = info.name;
+            const element = document.getElementById('info');
+            element.value = info.name;
           });
       }
     </script>

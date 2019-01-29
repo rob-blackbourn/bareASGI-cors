@@ -27,11 +27,11 @@ async def set_info(scope: Scope, info: Info, matches: RouteMatches, content: Con
 if __name__ == "__main__":
     import uvicorn
 
-    cors_middleware = CORSMiddleware(allow_origins='*', allow_methods=('GET'))
+    cors_middleware = CORSMiddleware(allow_origins='*', allow_methods=('GET', 'POST'), allow_headers=('*'))
 
     app = Application(info={'name': 'Michael Caine'}, middlewares=[cors_middleware])
 
     app.http_router.add({'GET'}, '/info', get_info)
-    app.http_router.add({'POST'}, '/info', set_info)
+    app.http_router.add({'POST', 'OPTIONS'}, '/info', set_info)
 
     uvicorn.run(app, port=9010)
