@@ -1,9 +1,6 @@
 from typing import List, Sequence, Mapping
 import re
-from bareasgi import (
-    Application,
-    text_writer
-)
+from bareasgi import text_writer
 from bareasgi.types import (
     Header,
     Scope,
@@ -13,7 +10,7 @@ from bareasgi.types import (
     HttpRequestCallback,
     HttpResponse
 )
-from .headers import find_headers, find_header_value, headers_to_dict, upsert_header
+from .headers import find_header_value, headers_to_dict, upsert_header
 
 ALL_METHODS = ("DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT")
 
@@ -29,11 +26,11 @@ COOKIE = b"cookie"
 ORIGIN = b"origin"
 VARY = b"vary"
 
+
 class CORSMiddleware:
 
     def __init__(
         self,
-        app: Application,
         allow_origins: Sequence[str] = (),
         allow_methods: Sequence[str] = ("GET",),
         allow_headers: Sequence[str] = (),
@@ -70,7 +67,6 @@ class CORSMiddleware:
         if allow_credentials:
             self.preflight_headers.append((ACCESS_CONTROL_ALLOW_CREDENTIALS, b"true"))
 
-        self.app = app
         self.allow_origins = allow_origins
         self.allow_methods = allow_methods
         self.allow_headers = allow_headers
@@ -100,8 +96,6 @@ class CORSMiddleware:
             self,
             request_headers: Mapping[bytes, List[bytes]]
     ) -> HttpResponse:
-        requested_cookie = COOKIE in request_headers
-
         headers: List[Header] = list(self.preflight_headers)
         failures = []
 
@@ -158,31 +152,31 @@ class CORSMiddleware:
             handler: HttpRequestCallback
     ) -> HttpResponse:
 
-        # Clone the headers
-        headers = list(scope['headers'])
+        request_headers: List[Header] = scope['headers']
 
-        origin = find_header_value(headers, ORIGIN)
+        response_status, response_headers, response_body = await handler(scope, info, matches, content)
+        if response_headers is None:
+            response_headers = []
+
+
+        origin = find_header_value(request_headers, ORIGIN)
 
         # If request includes any cookie headers, then we must respond
         # with the specific origin instead of '*'.
-        if self.allow_all_origins and find_header_value(headers, COOKIE):
+        if self.allow_all_origins and find_header_value(request_headers, COOKIE):
             upsert_header(self.simple_headers, ACCESS_CONTROL_ALLOW_ORIGIN, origin)
 
         # If we only allow specific origins, then we have to mirror back
         # the Origin header in the response.
         elif not self.allow_all_origins and self.is_allowed_origin(origin=origin):
-            upsert_header(headers, ACCESS_CONTROL_ALLOW_ORIGIN, origin)
-            vary_values = find_header_value(headers, VARY)
+            upsert_header(response_headers, ACCESS_CONTROL_ALLOW_ORIGIN, origin)
+            vary_values = find_header_value(response_headers, VARY)
             if not vary_values:
-                headers.append(((VARY, b'Origin')))
+                response_headers.append((VARY, b'Origin'))
             else:
-                upsert_header(headers, vary_values + b',Origin')
+                upsert_header(response_headers, VARY, vary_values + b',Origin')
 
         for header in self.simple_headers:
-            upsert_header(headers, header)
+            upsert_header(response_headers, *header)
 
-        # Clone the scope and replace the headers.
-        scope = dict(scope)
-        scope['headers'] = headers
-
-        return await handler(scope, info, matches, content)
+        return response_status, response_headers, response_body
