@@ -1,4 +1,5 @@
 from typing import List, Mapping, AbstractSet, Optional
+import logging
 import re
 from bareasgi import text_writer
 from bareasgi.types import (
@@ -26,6 +27,7 @@ COOKIE = b"cookie"
 ORIGIN = b"origin"
 VARY = b"vary"
 
+logger = logging.getLogger(__name__)
 
 class CORSMiddleware:
 
@@ -92,42 +94,45 @@ class CORSMiddleware:
         self.allow_origin_regex = compiled_allow_origin_regex
 
     def _preflight_check(self, request_header_map: Mapping[bytes, List[bytes]]) -> HttpResponse:
-        response_headers: List[Header] = list(self.preflight_headers)
-        errors = []
+        try:
+            response_headers: List[Header] = list(self.preflight_headers)
 
-        requested_origin = request_header_map[ORIGIN][0]
-        if self._is_allowed_origin(origin=requested_origin):
-            if not self.allow_all_origins:
-                # If self.allow_all_origins is True, then the "Access-Control-Allow-Origin"
-                # header is already set to "*".
-                # If we only allow specific origins, then we have to mirror back
-                # the Origin header in the response.
-                upsert_header(response_headers, ACCESS_CONTROL_ALLOW_ORIGIN, requested_origin)
-        else:
-            errors.append("origin")
-
-        requested_method = request_header_map[ACCESS_CONTROL_REQUEST_METHOD][0]
-        if requested_method.decode() not in self.allow_methods:
-            errors.append("method")
-
-        # If we allow all headers, then we have to mirror back any requested
-        # headers in the response.
-        if ACCESS_CONTROL_REQUEST_HEADERS in request_header_map:
-            access_control_request_header = request_header_map[ACCESS_CONTROL_REQUEST_HEADERS][0]
-            if self.allow_all_headers:
-                upsert_header(response_headers, ACCESS_CONTROL_ALLOW_HEADERS, access_control_request_header)
+            requested_origin = request_header_map[ORIGIN][0]
+            if self._is_allowed_origin(origin=requested_origin):
+                if not self.allow_all_origins:
+                    # If self.allow_all_origins is True, then the "Access-Control-Allow-Origin"
+                    # header is already set to "*".
+                    # If we only allow specific origins, then we have to mirror back
+                    # the Origin header in the response.
+                    upsert_header(response_headers, ACCESS_CONTROL_ALLOW_ORIGIN, requested_origin)
             else:
-                for header in access_control_request_header.decode().split(","):
-                    if header.strip() not in self.allow_headers:
-                        errors.append("headers")
+                raise RuntimeError(f'Invalid origin {requested_origin}')
 
-        # We don't strictly need to use 400 responses here, since its up to
-        # the browser to enforce the CORS policy, but its more informative
-        # if we do.
-        if errors:
-            return 400, response_headers, text_writer("disallowed CORS " + ", ".join(errors))
+            requested_method = request_header_map[ACCESS_CONTROL_REQUEST_METHOD][0]
+            if requested_method.decode() not in self.allow_methods:
+                raise RuntimeError(f'Invalid method {requested_method}')
 
-        return 200, response_headers, text_writer("OK")
+            # If we allow all headers, then we have to mirror back any requested
+            # headers in the response.
+            if ACCESS_CONTROL_REQUEST_HEADERS in request_header_map:
+                access_control_request_header = request_header_map[ACCESS_CONTROL_REQUEST_HEADERS][0]
+                if self.allow_all_headers:
+                    upsert_header(response_headers, ACCESS_CONTROL_ALLOW_HEADERS, access_control_request_header)
+                else:
+                    for header in access_control_request_header.decode().split(","):
+                        if header.strip() not in self.allow_headers:
+                            raise RuntimeError(f'Invalid header {header}')
+
+            logger.debug('Passed preflight checks')
+
+            return 200, response_headers, text_writer("OK")
+
+        except RuntimeError as error:
+            logger.warning(f'Failed preflight checks with error {error}')
+            # We don't strictly need to use 400 responses here, since its up to
+            # the browser to enforce the CORS policy, but its more informative
+            # if we do.
+            return 400, response_headers, text_writer(str(error))
 
     def _is_allowed_origin(self, origin: bytes) -> bool:
         if self.allow_all_origins:
@@ -187,9 +192,12 @@ class CORSMiddleware:
         headers = headers_to_dict(scope['headers'])
 
         if ORIGIN not in headers:
+            logger.debug(f'CORS processsing skipped as there is no "{ORIGIN}" header')
             return await handler(scope, info, matches, content)
 
         if scope["method"] == "OPTIONS" and ACCESS_CONTROL_REQUEST_METHOD in headers:
+            logger.debug('Performing preflight checks', extra=scope)
             return self._preflight_check(headers)
 
+        logger.debug('Processing simple response', extra=scope)
         return await self._simple_response(scope, info, matches, content, handler)

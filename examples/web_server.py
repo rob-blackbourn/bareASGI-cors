@@ -1,3 +1,4 @@
+import logging
 from bareasgi import (
     Application,
     Scope,
@@ -7,6 +8,8 @@ from bareasgi import (
     HttpResponse,
     text_writer
 )
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 async def http_request_callback(scope: Scope, info: Info, matches: RouteMatches, content: Content) -> HttpResponse:
