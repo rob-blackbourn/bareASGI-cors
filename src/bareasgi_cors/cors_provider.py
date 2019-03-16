@@ -40,9 +40,10 @@ class CORSMiddleware:
         allow_credentials: bool = False,
         allow_origin_regex: Optional[str] = None,
         expose_headers: AbstractSet[str] = None,
-        max_age: int = 600,
+        max_age: int = 600
     ) -> None:
-        """Construct the CORS middleware
+        """
+        Construct the CORS middleware
 
         :param allow_origins: An optional set of the allowed origins, or None for any origin.
         :param allow_methods: An optional set of allowed methods, or None for all methods.
