@@ -1,1 +1,1 @@
-bareasgi~=0.2
+bareasgi~=0.3
