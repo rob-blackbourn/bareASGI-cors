@@ -1,17 +1,17 @@
 from typing import List, Mapping, AbstractSet, Optional
 import logging
 import re
-from bareasgi import text_writer
-from bareasgi.types import (
+from bareasgi import (
     Header,
     Scope,
     Info,
     RouteMatches,
     Content,
     HttpRequestCallback,
-    HttpResponse
+    HttpResponse,
+    text_writer
 )
-from .headers import find_header_value, headers_to_dict, upsert_header
+import bareasgi.header as header
 
 ALL_METHODS = {"DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"}
 
@@ -29,18 +29,19 @@ VARY = b"vary"
 
 logger = logging.getLogger(__name__)
 
+
 class CORSMiddleware:
 
     def __init__(
-        self,
-        *,
-        allow_origins: Optional[AbstractSet[str]] = None,
-        allow_methods: Optional[AbstractSet[str]] = None,
-        allow_headers: Optional[AbstractSet[str]] = None,
-        allow_credentials: bool = False,
-        allow_origin_regex: Optional[str] = None,
-        expose_headers: AbstractSet[str] = None,
-        max_age: int = 600
+            self,
+            *,
+            allow_origins: Optional[AbstractSet[str]] = None,
+            allow_methods: Optional[AbstractSet[str]] = None,
+            allow_headers: Optional[AbstractSet[str]] = None,
+            allow_credentials: bool = False,
+            allow_origin_regex: Optional[str] = None,
+            expose_headers: AbstractSet[str] = None,
+            max_age: int = 600
     ) -> None:
         """
         Construct the CORS middleware
@@ -50,7 +51,7 @@ class CORSMiddleware:
         :param allow_headers: An optional set of allowed headers, or None for all headers.
         :param allow_credentials: If True allow credentials, otherwise disallow.
         :param allow_origin_regex: An optional regex pattern to apply to origins.
-        :param an optional set of headers to expose.
+        :param expose_headers: an optional set of headers to expose.
         :param max_age: The maximum age in seconds. Defaults to ten minutes.
         """
 
@@ -94,10 +95,11 @@ class CORSMiddleware:
 
         self.allow_origin_regex = compiled_allow_origin_regex
 
-    def _preflight_check(self, request_header_map: Mapping[bytes, List[bytes]]) -> HttpResponse:
-        try:
-            response_headers: List[Header] = list(self.preflight_headers)
 
+    def _preflight_check(self, request_header_map: Mapping[bytes, List[bytes]]) -> HttpResponse:
+        response_headers: List[Header] = list(self.preflight_headers)
+
+        try:
             requested_origin = request_header_map[ORIGIN][0]
             if self._is_allowed_origin(origin=requested_origin):
                 if not self.allow_all_origins:
@@ -105,7 +107,7 @@ class CORSMiddleware:
                     # header is already set to "*".
                     # If we only allow specific origins, then we have to mirror back
                     # the Origin header in the response.
-                    upsert_header(response_headers, ACCESS_CONTROL_ALLOW_ORIGIN, requested_origin)
+                    header.upsert(ACCESS_CONTROL_ALLOW_ORIGIN, requested_origin, response_headers)
             else:
                 raise RuntimeError(f'Invalid origin {requested_origin}')
 
@@ -118,11 +120,11 @@ class CORSMiddleware:
             if ACCESS_CONTROL_REQUEST_HEADERS in request_header_map:
                 access_control_request_header = request_header_map[ACCESS_CONTROL_REQUEST_HEADERS][0]
                 if self.allow_all_headers:
-                    upsert_header(response_headers, ACCESS_CONTROL_ALLOW_HEADERS, access_control_request_header)
+                    header.upsert(ACCESS_CONTROL_ALLOW_HEADERS, access_control_request_header, response_headers)
                 else:
-                    for header in access_control_request_header.decode().split(","):
-                        if header.strip() not in self.allow_headers:
-                            raise RuntimeError(f'Invalid header {header}')
+                    for hdr in access_control_request_header.decode().split(","):
+                        if hdr.strip() not in self.allow_headers:
+                            raise RuntimeError(f'Invalid header {hdr}')
 
             logger.debug('Passed preflight checks')
 
@@ -135,6 +137,7 @@ class CORSMiddleware:
             # if we do.
             return 400, response_headers, text_writer(str(error))
 
+
     def _is_allowed_origin(self, origin: bytes) -> bool:
         if self.allow_all_origins:
             return True
@@ -144,6 +147,7 @@ class CORSMiddleware:
             return True
 
         return origin_str in self.allow_origins
+
 
     async def _simple_response(
             self,
@@ -160,27 +164,28 @@ class CORSMiddleware:
         if response_headers is None:
             response_headers = []
 
-        origin = find_header_value(request_headers, ORIGIN)
+        origin = header.find(ORIGIN, request_headers)
 
         # If request includes any cookie headers, then we must respond
         # with the specific origin instead of '*'.
-        if self.allow_all_origins and find_header_value(request_headers, COOKIE):
-            upsert_header(self.simple_headers, ACCESS_CONTROL_ALLOW_ORIGIN, origin)
+        if self.allow_all_origins and header.find(COOKIE, request_headers):
+            header.upsert(ACCESS_CONTROL_ALLOW_ORIGIN, origin, self.simple_headers)
 
         # If we only allow specific origins, then we have to mirror back
         # the Origin header in the response.
         elif not self.allow_all_origins and self._is_allowed_origin(origin=origin):
-            upsert_header(response_headers, ACCESS_CONTROL_ALLOW_ORIGIN, origin)
-            vary_values = find_header_value(response_headers, VARY)
+            header.upsert(ACCESS_CONTROL_ALLOW_ORIGIN, origin, response_headers)
+            vary_values = header.find(VARY, response_headers)
             if not vary_values:
                 response_headers.append((VARY, b'Origin'))
             else:
-                upsert_header(response_headers, VARY, vary_values + b',Origin')
+                header.upsert(VARY, vary_values + b',Origin', response_headers)
 
-        for header in self.simple_headers:
-            upsert_header(response_headers, *header)
+        for name, value in self.simple_headers:
+            header.upsert(name, value, response_headers)
 
         return response_status, response_headers, response_body
+
 
     async def __call__(
             self,
@@ -190,7 +195,7 @@ class CORSMiddleware:
             content: Content,
             handler: HttpRequestCallback
     ) -> HttpResponse:
-        headers = headers_to_dict(scope['headers'])
+        headers = header.to_dict(scope['headers'])
 
         if ORIGIN not in headers:
             logger.debug(f'CORS processsing skipped as there is no "{ORIGIN}" header')
