@@ -17,6 +17,7 @@ setup(
     version=__version__,
     description='CORS support for bareasgi',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/rob-blackbourn/bareasgi-cors',
     author='Rob Blackbourn',
     author_email='rob.blackbourn@googlemail.com',
