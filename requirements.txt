@@ -1,1 +1,1 @@
-bareasgi>=1<=2
+bareasgi>=1<2
