@@ -1,7 +1,7 @@
 from typing import List, Mapping, AbstractSet, Optional
 import logging
 import re
-from bareasgi import (
+from baretypes import (
     Header,
     Scope,
     Info,
@@ -9,9 +9,9 @@ from bareasgi import (
     Content,
     HttpRequestCallback,
     HttpResponse,
-    text_writer
 )
-import bareasgi.header as header
+from bareutils import text_writer
+import bareutils.header as header
 
 ALL_METHODS = {"DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"}
 

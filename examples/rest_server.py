@@ -1,18 +1,21 @@
 import json
 import logging
-from bareasgi import (
-    Application,
+from bareasgi import Application
+from baretypes import (
     Scope,
     Info,
     RouteMatches,
     Content,
-    HttpResponse,
+    HttpResponse
+)
+from bareutils import (
     text_reader,
     text_writer
 )
 from bareasgi_cors import CORSMiddleware
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 async def get_info(scope: Scope, info: Info, matches: RouteMatches, content: Content) -> HttpResponse:
     text = json.dumps(info)

@@ -1,1 +1,2 @@
-bareasgi>=1<2
+bareasgi>=2<3
+bareutils>=2.2<3

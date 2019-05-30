@@ -1,13 +1,13 @@
 import logging
-from bareasgi import (
-    Application,
+from bareasgi import Application
+from baretypes import (
     Scope,
     Info,
     RouteMatches,
     Content,
-    HttpResponse,
-    text_writer
+    HttpResponse
 )
+from bareutils import text_writer
 
 logging.basicConfig(level=logging.DEBUG)
 
