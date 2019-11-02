@@ -1,2 +1,0 @@
-bareasgi~=3.0
-bareutils~=3.0

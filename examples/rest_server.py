@@ -1,5 +1,8 @@
+"""Rest server example"""
+
 import json
 import logging
+
 from bareasgi import Application
 from baretypes import (
     Scope,
@@ -17,12 +20,24 @@ from bareasgi_cors import CORSMiddleware
 logging.basicConfig(level=logging.DEBUG)
 
 
-async def get_info(scope: Scope, info: Info, matches: RouteMatches, content: Content) -> HttpResponse:
+async def get_info(
+        _scope: Scope,
+        info: Info,
+        _matches: RouteMatches,
+        _content: Content
+) -> HttpResponse:
+    """GET request handler"""
     text = json.dumps(info)
     return 200, [(b'content-type', b'application/json')], text_writer(text)
 
 
-async def set_info(scope: Scope, info: Info, matches: RouteMatches, content: Content) -> HttpResponse:
+async def set_info(
+        _scope: Scope,
+        info: Info,
+        _matches: RouteMatches,
+        content: Content
+) -> HttpResponse:
+    """POST request handler"""
     text = await text_reader(content)
     data = json.loads(text)
     info.update(data)
@@ -34,7 +49,8 @@ if __name__ == "__main__":
 
     cors_middleware = CORSMiddleware()
 
-    app = Application(info={'name': 'Michael Caine'}, middlewares=[cors_middleware])
+    app = Application(info={'name': 'Michael Caine'},
+                      middlewares=[cors_middleware])
 
     app.http_router.add({'GET'}, '/info', get_info)
     app.http_router.add({'POST', 'OPTIONS'}, '/info', set_info)

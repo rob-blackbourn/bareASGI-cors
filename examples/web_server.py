@@ -1,4 +1,7 @@
+"""Web Server examples"""
+
 import logging
+
 from bareasgi import Application
 from baretypes import (
     Scope,
@@ -12,7 +15,13 @@ from bareutils import text_writer
 logging.basicConfig(level=logging.DEBUG)
 
 
-async def http_request_callback(scope: Scope, info: Info, matches: RouteMatches, content: Content) -> HttpResponse:
+async def http_request_callback(
+        _scope: Scope,
+        _info: Info,
+        _matches: RouteMatches,
+        _content: Content
+) -> HttpResponse:
+    """GET handler for page"""
     page = """
 <!DOCTYPE html>
 <html>

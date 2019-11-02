@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 class CORSMiddleware:
-    """A CORS middlearw implementation
+    """A CORS middleware implementation
     """
 
     def __init__(
@@ -91,10 +91,11 @@ class CORSMiddleware:
             self.preflight_headers.append(
                 (ACCESS_CONTROL_ALLOW_METHODS, ", ".join(self.allow_methods).encode()))
             self.preflight_headers.append(
-                (ACCESS_CONTROL_MAX_AGE, str(max_age).encode()))
+                (ACCESS_CONTROL_MAX_AGE, str(max_age).encode())
+            )
 
         self.allow_all_headers = allow_headers is None
-        if self.allow_all_headers:
+        if allow_headers is None:
             self.allow_headers = None
         else:
             self.allow_headers = allow_headers
@@ -107,7 +108,10 @@ class CORSMiddleware:
 
         self.allow_origin_regex = compiled_allow_origin_regex
 
-    def _preflight_check(self, request_header_map: Mapping[bytes, List[bytes]]) -> HttpResponse:
+    def _preflight_check(
+            self,
+            request_header_map: Mapping[bytes, List[bytes]]
+    ) -> HttpResponse:
         response_headers: List[Header] = list(self.preflight_headers)
 
         try:
@@ -118,23 +122,31 @@ class CORSMiddleware:
                     # header is already set to "*".
                     # If we only allow specific origins, then we have to mirror back
                     # the Origin header in the response.
-                    header.upsert(ACCESS_CONTROL_ALLOW_ORIGIN,
-                                  requested_origin, response_headers)
+                    header.upsert(
+                        ACCESS_CONTROL_ALLOW_ORIGIN,
+                        requested_origin,
+                        response_headers
+                    )
             else:
-                raise RuntimeError(f'Invalid origin {requested_origin}')
+                raise RuntimeError(
+                    f'Invalid origin {requested_origin!r}'
+                )
 
             requested_method = request_header_map[ACCESS_CONTROL_REQUEST_METHOD][0]
             if requested_method.decode() not in self.allow_methods:
-                raise RuntimeError(f'Invalid method {requested_method}')
+                raise RuntimeError(f'Invalid method {requested_method!r}')
 
             # If we allow all headers, then we have to mirror back any requested
             # headers in the response.
             if ACCESS_CONTROL_REQUEST_HEADERS in request_header_map:
                 access_control_request_header = request_header_map[ACCESS_CONTROL_REQUEST_HEADERS][0]
                 if self.allow_all_headers:
-                    header.upsert(ACCESS_CONTROL_ALLOW_HEADERS,
-                                  access_control_request_header, response_headers)
-                else:
+                    header.upsert(
+                        ACCESS_CONTROL_ALLOW_HEADERS,
+                        access_control_request_header,
+                        response_headers
+                    )
+                elif self.allow_headers:
                     for hdr in access_control_request_header.decode().split(","):
                         if hdr.strip() not in self.allow_headers:
                             raise RuntimeError(f'Invalid header {hdr}')
@@ -158,6 +170,9 @@ class CORSMiddleware:
         if self.allow_origin_regex is not None and self.allow_origin_regex.match(origin_str):
             return True
 
+        if self.allow_origins is None:
+            return False
+
         return origin_str in self.allow_origins
 
     async def _simple_response(
@@ -171,33 +186,44 @@ class CORSMiddleware:
 
         request_headers: List[Header] = scope['headers']
 
-        response_status, response_headers, response_body, response_pushes = await handler(scope, info, matches, content)
-        if response_headers is None:
-            response_headers = []
+        status, headers, response_content, pushes = await handler(
+            scope,
+            info,
+            matches,
+            content
+        )
+        if headers is None:
+            headers = []
 
         origin = header.find(ORIGIN, request_headers)
 
         # If request includes any cookie headers, then we must respond
         # with the specific origin instead of '*'.
         if self.allow_all_origins and header.find(COOKIE, request_headers):
-            header.upsert(ACCESS_CONTROL_ALLOW_ORIGIN,
-                          origin, self.simple_headers)
+            header.upsert(
+                ACCESS_CONTROL_ALLOW_ORIGIN,
+                origin,
+                self.simple_headers
+            )
 
         # If we only allow specific origins, then we have to mirror back
         # the Origin header in the response.
         elif not self.allow_all_origins and self._is_allowed_origin(origin=origin):
-            header.upsert(ACCESS_CONTROL_ALLOW_ORIGIN,
-                          origin, response_headers)
-            vary_values = header.find(VARY, response_headers)
+            header.upsert(
+                ACCESS_CONTROL_ALLOW_ORIGIN,
+                origin,
+                headers
+            )
+            vary_values = header.find(VARY, headers)
             if not vary_values:
-                response_headers.append((VARY, b'Origin'))
+                headers.append((VARY, b'Origin'))
             else:
-                header.upsert(VARY, vary_values + b',Origin', response_headers)
+                header.upsert(VARY, vary_values + b',Origin', headers)
 
         for name, value in self.simple_headers:
-            header.upsert(name, value, response_headers)
+            header.upsert(name, value, headers)
 
-        return response_status, response_headers, response_body, response_pushes
+        return status, headers, response_content, pushes
 
     async def __call__(
             self,
@@ -221,4 +247,10 @@ class CORSMiddleware:
             return self._preflight_check(headers)
 
         logger.debug('Processing simple response', extra=scope)
-        return await self._simple_response(scope, info, matches, content, handler)
+        return await self._simple_response(
+            scope,
+            info,
+            matches,
+            content,
+            handler
+        )
