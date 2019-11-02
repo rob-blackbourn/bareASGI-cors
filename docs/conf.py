@@ -20,7 +20,7 @@
 import os
 import sys
 
-src = os.path.abspath('../src/')
+src = os.path.abspath('../')
 sys.path.insert(0, src)
 
 # -- General configuration ------------------------------------------------
