@@ -88,11 +88,12 @@ class CORSMiddleware:
             self.preflight_headers.append((ACCESS_CONTROL_ALLOW_ORIGIN, b"*"))
         else:
             self.preflight_headers.append((VARY, b"Origin"))
-            self.preflight_headers.append(
-                (ACCESS_CONTROL_ALLOW_METHODS, ", ".join(self.allow_methods).encode()))
-            self.preflight_headers.append(
-                (ACCESS_CONTROL_MAX_AGE, str(max_age).encode())
-            )
+
+        self.preflight_headers.append(
+            (ACCESS_CONTROL_ALLOW_METHODS, ", ".join(self.allow_methods).encode()))
+        self.preflight_headers.append(
+            (ACCESS_CONTROL_MAX_AGE, str(max_age).encode())
+        )
 
         self.allow_all_headers = allow_headers is None
         if allow_headers is None:
