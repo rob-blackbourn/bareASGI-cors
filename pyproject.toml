@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bareasgi-cors"
-version = "3.1.0"
+version = "3.1.1"
 description = "CORS support for bareasgi"
 authors = ["Rob Blackbourn <rob.blackbourn@gmail.com>"]
 license = "Apache-2.0"
