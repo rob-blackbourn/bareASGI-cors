@@ -1,6 +1,4 @@
-"""
-CORS Middleware
-"""
+"""CORS Middleware"""
 
 from typing import List, Mapping, AbstractSet, Optional
 import logging
@@ -49,16 +47,25 @@ class CORSMiddleware:
             expose_headers: AbstractSet[str] = None,
             max_age: int = 600
     ) -> None:
-        """
-        Construct the CORS middleware
-
-        :param allow_origins: An optional set of the allowed origins, or None for any origin.
-        :param allow_methods: An optional set of allowed methods, or None for all methods.
-        :param allow_headers: An optional set of allowed headers, or None for all headers.
-        :param allow_credentials: If True allow credentials, otherwise disallow.
-        :param allow_origin_regex: An optional regex pattern to apply to origins.
-        :param expose_headers: an optional set of headers to expose.
-        :param max_age: The maximum age in seconds. Defaults to ten minutes.
+        """Construct the CORS middleware
+        
+        Args:
+            allow_origins (Optional[AbstractSet[str]], optional): An optional
+                set of the allowed origins, or None for any origin.. Defaults
+                to None.
+            allow_methods (Optional[AbstractSet[str]], optional): An optional
+                set of allowed methods, or None for all methods. Defaults to
+                None.
+            allow_headers (Optional[AbstractSet[str]], optional): An optional
+                set of allowed headers, or None for all headers. Defaults to
+                None.
+            allow_credentials (bool, optional): If True allow credentials,
+                otherwise disallow. Defaults to False.
+            allow_origin_regex (Optional[str], optional): An optional regex
+                pattern to apply to origins. Defaults to None.
+            expose_headers (AbstractSet[str], optional): An optional set of
+                headers to expose. Defaults to None.
+            max_age (int, optional): The maximum age in seconds. Defaults to 600.
         """
 
         self.allow_methods = allow_methods if allow_methods is not None else ALL_METHODS

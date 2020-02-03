@@ -1,4 +1,4 @@
-"""Exports from bareASGI-cors"""
+"""bareasgi_cors"""
 
 from .cors_provider import CORSMiddleware
 
