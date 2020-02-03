@@ -1,6 +1,6 @@
 # bareasgi-cors
 
-CORS support for [bareASGI](http://github.com/rob-blackbourn/bareasgi) (read the [documentation](https://bareasgi-cors.readthedocs.io/en/latest/))
+CORS support for [bareASGI](http://github.com/rob-blackbourn/bareasgi) (read the [documentation](https://rob-blackbourn.github.io/bareASGI-cors/))
 
 ## Usage
 
