@@ -1,14 +1,14 @@
-# bareasgi-cors
+# bareASGI-cors
 
-CORS support for [bareASGI](http://github.com/rob-blackbourn/bareasgi) (read the [documentation](https://rob-blackbourn.github.io/bareASGI-cors/))
+CORS support for [bareASGI](http://github.com/rob-blackbourn/bareasgi) (read the
+[docs](https://rob-blackbourn.github.io/bareASGI-cors/))
 
 ## Usage
 
-A convenience function is provided.
+Simply create the `CORSMiddleware` class and put is as the first middleware.
 
 ```python
 import json
-import logging
 import uvicorn
 from bareasgi import (
     Application,
@@ -16,8 +16,6 @@ from bareasgi import (
     text_writer
 )
 from bareasgi_cors import CORSMiddleware
-
-logging.basicConfig(level=logging.DEBUG)
 
 async def get_info(scope, info, matches, content):
     text = json.dumps(info)
@@ -30,8 +28,10 @@ async def set_info(scope, info, matches, content):
     info.update(data)
     return 204, None, None
 
+# Create the CORS middleware class
 cors_middleware = CORSMiddleware()
 
+# Use the CORS middleware as the first middleware.
 app = Application(info={'name': 'Michael Caine'}, middlewares=[cors_middleware])
 
 app.http_router.add({'GET'}, '/info', get_info)
