@@ -3,6 +3,10 @@
 CORS support for [bareASGI](http://github.com/rob-blackbourn/bareasgi) (read the
 [docs](https://rob-blackbourn.github.io/bareASGI-cors/))
 
+## Branch
+
+The is the v3 maintenance branch.
+
 ## Usage
 
 Simply create the `CORSMiddleware` class and put is as the first middleware.
