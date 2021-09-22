@@ -1,19 +1,16 @@
 """CORS Middleware"""
 
-from typing import List, Mapping, AbstractSet, Optional
 import logging
 import re
-from baretypes import (
+from typing import List, Mapping, AbstractSet, Optional
+
+from bareasgi import (
     Header,
-    Scope,
-    Info,
-    RouteMatches,
-    Content,
     HttpRequestCallback,
+    HttpRequest,
     HttpResponse,
 )
-from bareutils import text_writer
-import bareutils.header as header
+from bareutils import text_writer, header
 
 ALL_METHODS = {"DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"}
 
@@ -48,7 +45,7 @@ class CORSMiddleware:
             max_age: int = 600
     ) -> None:
         """Construct the CORS middleware
-        
+
         Args:
             allow_origins (Optional[AbstractSet[str]], optional): An optional
                 set of the allowed origins, or None for any origin.. Defaults
@@ -161,14 +158,14 @@ class CORSMiddleware:
 
             logger.debug('Passed preflight checks')
 
-            return 200, response_headers, text_writer("OK")
+            return HttpResponse(200, response_headers, text_writer("OK"))
 
         except RuntimeError as error:
             logger.warning('Failed preflight checks with error %s', error)
             # We don't strictly need to use 400 responses here, since its up to
             # the browser to enforce the CORS policy, but its more informative
             # if we do.
-            return 400, response_headers, text_writer(str(error))
+            return HttpResponse(400, response_headers, text_writer(str(error)))
 
     def _is_allowed_origin(self, origin: bytes) -> bool:
         if self.allow_all_origins:
@@ -185,25 +182,18 @@ class CORSMiddleware:
 
     async def _simple_response(
             self,
-            scope: Scope,
-            info: Info,
-            matches: RouteMatches,
-            content: Content,
+            request: HttpRequest,
             handler: HttpRequestCallback
     ) -> HttpResponse:
 
-        request_headers: List[Header] = scope['headers']
+        request_headers: List[Header] = request.scope['headers']
 
-        status, headers, response_content, pushes = await handler(
-            scope,
-            info,
-            matches,
-            content
-        )
-        if headers is None:
-            headers = []
+        response = await handler(request)
+
+        headers = [] if response.headers is None else list(response.headers)
 
         origin = header.find(ORIGIN, request_headers)
+        assert origin is not None
 
         # If request includes any cookie headers, then we must respond
         # with the specific origin instead of '*'.
@@ -231,34 +221,33 @@ class CORSMiddleware:
         for name, value in self.simple_headers:
             header.upsert(name, value, headers)
 
-        return status, headers, response_content, pushes
+        return HttpResponse(
+            response.status,
+            headers,
+            response.body,
+            response.pushes
+        )
 
     async def __call__(
             self,
-            scope: Scope,
-            info: Info,
-            matches: RouteMatches,
-            content: Content,
+            request: HttpRequest,
             handler: HttpRequestCallback
     ) -> HttpResponse:
-        headers = header.to_dict(scope['headers'])
+        headers = header.to_dict(request.scope['headers'])
 
         if ORIGIN not in headers:
             logger.debug(
                 'CORS processsing skipped as there is no "%s" header',
                 ORIGIN
             )
-            return await handler(scope, info, matches, content)
+            return await handler(request)
 
-        if scope["method"] == "OPTIONS" and ACCESS_CONTROL_REQUEST_METHOD in headers:
-            logger.debug('Performing preflight checks', extra=scope)
+        if (
+                request.scope["method"] == "OPTIONS" and
+                ACCESS_CONTROL_REQUEST_METHOD in headers
+        ):
+            logger.debug('Performing preflight checks', extra=request.scope)
             return self._preflight_check(headers)
 
-        logger.debug('Processing simple response', extra=scope)
-        return await self._simple_response(
-            scope,
-            info,
-            matches,
-            content,
-            handler
-        )
+        logger.debug('Processing simple response', extra=request.scope)
+        return await self._simple_response(request, handler)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bareasgi-cors"
-version = "3.1.2"
+version = "4.0.0.alpha.0"
 description = "CORS support for bareasgi"
 authors = ["Rob Blackbourn <rob.blackbourn@gmail.com>"]
 license = "Apache-2.0"
@@ -12,17 +12,15 @@ repository = "https://github.com/rob-blackbourn/bareasgi-cors"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-bareasgi = "^3.5"
+bareasgi = "^4.0.0-alpha.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.0"
 pytest-asyncio = "^0.10"
 pytest-runner = "^5.1"
-uvicorn = "^0.13"
+uvicorn = "^0.15"
 hypercorn = "^0.11"
-Sphinx = "^1.8"
-sphinxcontrib-websupport = "^1.1"
-uvloop = "^0.15.0"
+uvloop = "^0.15"
 pylint = "^2.9"
 mypy = "^0.910"
 autopep8 = "^1.5"
