@@ -6,6 +6,6 @@ The package can be installed with pip.
 pip install bareasgi-cors
 ```
 
-This is a Python 3.7 and later package with dependencies on:
+This is a Python 3.8 and later package with dependencies on:
 
 * [bareASGI](https://github.com/rob-blackbourn/bareasgi)
