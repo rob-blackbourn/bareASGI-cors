@@ -2,10 +2,9 @@
 
 import logging
 import re
-from typing import List, Mapping, AbstractSet, Optional
+from typing import AbstractSet, Iterable, List, Mapping, Optional, Tuple
 
 from bareasgi import (
-    Header,
     HttpRequestCallback,
     HttpRequest,
     HttpResponse,
@@ -14,24 +13,13 @@ from bareutils import text_writer, header
 
 ALL_METHODS = {"DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"}
 
-ACCESS_CONTROL_ALLOW_CREDENTIALS = b"access-control-allow-credentials"
-ACCESS_CONTROL_ALLOW_HEADERS = b"access-control-allow-headers"
-ACCESS_CONTROL_ALLOW_METHODS = b"access-control-allow-methods"
-ACCESS_CONTROL_ALLOW_ORIGIN = b"access-control-allow-origin"
-ACCESS_CONTROL_EXPOSE_HEADERS = b"access-control-expose-headers"
-ACCESS_CONTROL_MAX_AGE = b"access-control-max-age"
-ACCESS_CONTROL_REQUEST_METHOD = b"access-control-request-method"
-ACCESS_CONTROL_REQUEST_HEADERS = b"access-control-request-headers"
-COOKIE = b"cookie"
-ORIGIN = b"origin"
-VARY = b"vary"
+LOGGER = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
+Header = Tuple[bytes, bytes]
 
 
 class CORSMiddleware:
-    """A CORS middleware implementation
-    """
+    """A CORS middleware implementation"""
 
     def __init__(
             self,
@@ -75,28 +63,34 @@ class CORSMiddleware:
         self.allow_all_origins = allow_origins is None
         if self.allow_all_origins:
             self.allow_origins = None
-            self.simple_headers.append((ACCESS_CONTROL_ALLOW_ORIGIN, b"*"))
+            self.simple_headers.append(
+                (header.ACCESS_CONTROL_ALLOW_ORIGIN, b"*"))
         else:
             self.allow_origins = allow_origins
 
         if allow_credentials:
             self.simple_headers.append(
-                (ACCESS_CONTROL_ALLOW_CREDENTIALS, b"true"))
+                (header.ACCESS_CONTROL_ALLOW_CREDENTIALS, b"true"))
 
         if expose_headers:
             self.simple_headers.append(
-                (ACCESS_CONTROL_EXPOSE_HEADERS, ", ".join(expose_headers).encode()))
+                (header.ACCESS_CONTROL_EXPOSE_HEADERS, ", ".join(expose_headers).encode()))
 
         self.preflight_headers: List[Header] = []
         if self.allow_all_origins:
-            self.preflight_headers.append((ACCESS_CONTROL_ALLOW_ORIGIN, b"*"))
+            self.preflight_headers.append(
+                (header.ACCESS_CONTROL_ALLOW_ORIGIN, b"*"))
         else:
-            self.preflight_headers.append((VARY, b"Origin"))
+            self.preflight_headers.append((header.VARY, b"Origin"))
 
         self.preflight_headers.append(
-            (ACCESS_CONTROL_ALLOW_METHODS, ", ".join(self.allow_methods).encode()))
+            (
+                header.ACCESS_CONTROL_ALLOW_METHODS,
+                ", ".join(self.allow_methods).encode()
+            )
+        )
         self.preflight_headers.append(
-            (ACCESS_CONTROL_MAX_AGE, str(max_age).encode())
+            (header.ACCESS_CONTROL_MAX_AGE, str(max_age).encode())
         )
 
         self.allow_all_headers = allow_headers is None
@@ -105,11 +99,16 @@ class CORSMiddleware:
         else:
             self.allow_headers = allow_headers
             self.preflight_headers.append(
-                (ACCESS_CONTROL_ALLOW_HEADERS, ", ".join(allow_headers).encode()))
+                (
+                    header.ACCESS_CONTROL_ALLOW_HEADERS,
+                    ", ".join(allow_headers).encode()
+                )
+            )
 
         if allow_credentials:
             self.preflight_headers.append(
-                (ACCESS_CONTROL_ALLOW_CREDENTIALS, b"true"))
+                (header.ACCESS_CONTROL_ALLOW_CREDENTIALS, b"true")
+            )
 
         self.allow_origin_regex = compiled_allow_origin_regex
 
@@ -117,10 +116,11 @@ class CORSMiddleware:
             self,
             request_header_map: Mapping[bytes, List[bytes]]
     ) -> HttpResponse:
-        response_headers: List[Header] = list(self.preflight_headers)
+        response_headers: List[Header] = list(
+            self.preflight_headers)
 
         try:
-            requested_origin = request_header_map[ORIGIN][0]
+            requested_origin = request_header_map[header.ORIGIN][0]
             if self._is_allowed_origin(origin=requested_origin):
                 if not self.allow_all_origins:
                     # If self.allow_all_origins is True, then the "Access-Control-Allow-Origin"
@@ -128,7 +128,7 @@ class CORSMiddleware:
                     # If we only allow specific origins, then we have to mirror back
                     # the Origin header in the response.
                     header.upsert(
-                        ACCESS_CONTROL_ALLOW_ORIGIN,
+                        header.ACCESS_CONTROL_ALLOW_ORIGIN,
                         requested_origin,
                         response_headers
                     )
@@ -137,17 +137,18 @@ class CORSMiddleware:
                     f'Invalid origin {requested_origin!r}'
                 )
 
-            requested_method = request_header_map[ACCESS_CONTROL_REQUEST_METHOD][0]
+            requested_method = request_header_map[header.ACCESS_CONTROL_REQUEST_METHOD][0]
             if requested_method.decode() not in self.allow_methods:
                 raise RuntimeError(f'Invalid method {requested_method!r}')
 
             # If we allow all headers, then we have to mirror back any requested
             # headers in the response.
-            if ACCESS_CONTROL_REQUEST_HEADERS in request_header_map:
-                access_control_request_header = request_header_map[ACCESS_CONTROL_REQUEST_HEADERS][0]
+            if header.ACCESS_CONTROL_REQUEST_HEADERS in request_header_map:
+                access_control_request_header = request_header_map[
+                    header.ACCESS_CONTROL_REQUEST_HEADERS][0]
                 if self.allow_all_headers:
                     header.upsert(
-                        ACCESS_CONTROL_ALLOW_HEADERS,
+                        header.ACCESS_CONTROL_ALLOW_HEADERS,
                         access_control_request_header,
                         response_headers
                     )
@@ -156,12 +157,12 @@ class CORSMiddleware:
                         if hdr.strip() not in self.allow_headers:
                             raise RuntimeError(f'Invalid header {hdr}')
 
-            logger.debug('Passed preflight checks')
+            LOGGER.debug('Passed preflight checks')
 
             return HttpResponse(200, response_headers, text_writer("OK"))
 
         except RuntimeError as error:
-            logger.warning('Failed preflight checks with error %s', error)
+            LOGGER.warning('Failed preflight checks with error %s', error)
             # We don't strictly need to use 400 responses here, since its up to
             # the browser to enforce the CORS policy, but its more informative
             # if we do.
@@ -186,20 +187,20 @@ class CORSMiddleware:
             handler: HttpRequestCallback
     ) -> HttpResponse:
 
-        request_headers: List[Header] = request.scope['headers']
+        request_headers: Iterable[Header] = request.scope['headers']
 
         response = await handler(request)
 
         headers = [] if response.headers is None else list(response.headers)
 
-        origin = header.find(ORIGIN, request_headers)
+        origin = header.find(header.ORIGIN, request_headers)
         assert origin is not None
 
         # If request includes any cookie headers, then we must respond
         # with the specific origin instead of '*'.
-        if self.allow_all_origins and header.find(COOKIE, request_headers):
+        if self.allow_all_origins and header.find(header.COOKIE, request_headers):
             header.upsert(
-                ACCESS_CONTROL_ALLOW_ORIGIN,
+                header.ACCESS_CONTROL_ALLOW_ORIGIN,
                 origin,
                 self.simple_headers
             )
@@ -208,15 +209,15 @@ class CORSMiddleware:
         # the Origin header in the response.
         elif not self.allow_all_origins and self._is_allowed_origin(origin=origin):
             header.upsert(
-                ACCESS_CONTROL_ALLOW_ORIGIN,
+                header.ACCESS_CONTROL_ALLOW_ORIGIN,
                 origin,
                 headers
             )
-            vary_values = header.find(VARY, headers)
+            vary_values = header.find(header.VARY, headers)
             if not vary_values:
-                headers.append((VARY, b'Origin'))
+                headers.append((header.VARY, b'Origin'))
             else:
-                header.upsert(VARY, vary_values + b',Origin', headers)
+                header.upsert(header.VARY, vary_values + b',Origin', headers)
 
         for name, value in self.simple_headers:
             header.upsert(name, value, headers)
@@ -235,19 +236,19 @@ class CORSMiddleware:
     ) -> HttpResponse:
         headers = header.to_dict(request.scope['headers'])
 
-        if ORIGIN not in headers:
-            logger.debug(
+        if header.ORIGIN not in headers:
+            LOGGER.debug(
                 'CORS processsing skipped as there is no "%s" header',
-                ORIGIN
+                header.ORIGIN
             )
             return await handler(request)
 
         if (
                 request.scope["method"] == "OPTIONS" and
-                ACCESS_CONTROL_REQUEST_METHOD in headers
+                header.ACCESS_CONTROL_REQUEST_METHOD in headers
         ):
-            logger.debug('Performing preflight checks', extra=request.scope)
+            LOGGER.debug('Performing preflight checks')
             return self._preflight_check(headers)
 
-        logger.debug('Processing simple response', extra=request.scope)
+        LOGGER.debug('Processing simple response')
         return await self._simple_response(request, handler)
