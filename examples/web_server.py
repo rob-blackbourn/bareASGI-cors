@@ -2,25 +2,14 @@
 
 import logging
 
-from bareasgi import Application
-from baretypes import (
-    Scope,
-    Info,
-    RouteMatches,
-    Content,
-    HttpResponse
-)
+from bareasgi import Application, HttpRequest, HttpResponse
 from bareutils import text_writer
+import uvicorn
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-async def http_request_callback(
-        _scope: Scope,
-        _info: Info,
-        _matches: RouteMatches,
-        _content: Content
-) -> HttpResponse:
+async def http_request_callback(_request: HttpRequest) -> HttpResponse:
     """GET handler for page"""
     page = """
 <!DOCTYPE html>
@@ -68,13 +57,16 @@ async def http_request_callback(
   </body>
 </html>    
     """
-    return 200, [(b'content-type', b'text/html')], text_writer(page)
+    return HttpResponse(
+        200,
+        [(b'content-type', b'text/html')],
+        text_writer(page)
+    )
 
 
 if __name__ == "__main__":
-    import uvicorn
 
     app = Application()
-    app.http_router.add({'GET'}, '/{path}', http_request_callback)
+    app.http_router.add({'GET'}, '/index.html', http_request_callback)
 
     uvicorn.run(app, port=9009)

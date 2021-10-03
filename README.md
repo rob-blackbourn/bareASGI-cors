@@ -17,16 +17,16 @@ from bareasgi import (
 )
 from bareasgi_cors import CORSMiddleware
 
-async def get_info(scope, info, matches, content):
-    text = json.dumps(info)
-    return 200, [(b'content-type', b'application/json')], text_writer(text)
+async def get_info(request):
+    text = json.dumps(request.info)
+    return HttpResponse(200, [(b'content-type', b'application/json')], text_writer(text))
 
 
-async def set_info(scope, info, matches, content):
-    text = await text_reader(content)
+async def set_info(request):
+    text = await text_reader(request.body)
     data = json.loads(text)
-    info.update(data)
-    return 204, None, None
+    request.info.update(data)
+    return HttpResponse(204)
 
 # Create the CORS middleware class
 cors_middleware = CORSMiddleware()
