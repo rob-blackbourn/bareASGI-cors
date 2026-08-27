@@ -1,6 +1,6 @@
 """Helper functions"""
 
-from typing import AbstractSet, Optional
+from typing import AbstractSet
 
 from bareasgi import Application
 

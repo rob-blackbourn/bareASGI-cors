@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import AbstractSet, Iterable, List, Mapping, Optional, Tuple
+from typing import AbstractSet, Iterable, Mapping
 
 from bareasgi import (
     HttpRequestCallback,
@@ -15,7 +15,7 @@ ALL_METHODS = {"DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"}
 
 LOGGER = logging.getLogger(__name__)
 
-Header = Tuple[bytes, bytes]
+type Header = tuple[bytes, bytes]
 
 
 class CORSMiddleware:
@@ -59,7 +59,7 @@ class CORSMiddleware:
         if allow_origin_regex is not None:
             compiled_allow_origin_regex = re.compile(allow_origin_regex)
 
-        self.simple_headers: List[Header] = []
+        self.simple_headers: list[Header] = []
         self.allow_all_origins = allow_origins is None
         if self.allow_all_origins:
             self.allow_origins = None
@@ -76,7 +76,7 @@ class CORSMiddleware:
             self.simple_headers.append(
                 (header.ACCESS_CONTROL_EXPOSE_HEADERS, ", ".join(expose_headers).encode()))
 
-        self.preflight_headers: List[Header] = []
+        self.preflight_headers: list[Header] = []
         if self.allow_all_origins:
             self.preflight_headers.append(
                 (header.ACCESS_CONTROL_ALLOW_ORIGIN, b"*"))
@@ -114,10 +114,9 @@ class CORSMiddleware:
 
     def _preflight_check(
             self,
-            request_header_map: Mapping[bytes, List[bytes]]
+            request_header_map: Mapping[bytes, list[bytes]]
     ) -> HttpResponse:
-        response_headers: List[Header] = list(
-            self.preflight_headers)
+        response_headers = list(self.preflight_headers)
 
         try:
             requested_origin = request_header_map[header.ORIGIN][0]
