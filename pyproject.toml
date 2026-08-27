@@ -1,35 +1,104 @@
-[tool.poetry]
+[project]
 name = "bareasgi-cors"
 version = "4.1.0"
 description = "CORS support for bareasgi"
-authors = ["Rob Blackbourn <rob.blackbourn@gmail.com>"]
-license = "Apache-2.0"
-readme = "README.md"
-packages = [
-    { include = "bareasgi_cors" },
+authors = [
+    { name = "Rob Blackbourn", email = "rob.blackbourn@gmail.com" }
 ]
-repository = "https://github.com/rob-blackbourn/bareASGI-cors"
+requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+]
+readme = "README.md"
+license = "Apache-2.0"
+license-files = [
+    "LICENSE"
+]
+keywords = [
+    "asgi",
+    "web",
+    "framework",
+    "asyncio",
+    "http",
+    "cors"
+]
+dependencies = [
+    "bareASGI>=5.0.0-alpha.4,<6"
+]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-bareasgi = "^4.0"
+[project.optional-dependencies]
+dev = [
+    "autopep8",
+    "coverage",
+    "mypy",
+    "pytest",
+    "pytest-asyncio",
+    "pylint",
+    "types-setuptools",
+]
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "jetblack-markdown",
+    "mike",
+]
+examples = [
+    "hypercorn",
+    "uvicorn"
+]
 
-[tool.poetry.dev-dependencies]
-pytest = "^5.0"
-pytest-asyncio = "^0.10"
-pytest-runner = "^5.1"
-uvicorn = "^0.15"
-hypercorn = "^0.11"
-uvloop = "^0.15"
-pylint = "^2.9"
-mypy = "^0.910"
-autopep8 = "^1.5"
-rope = "^0.14.0"
-mkdocs = "^1.2"
-mkdocs-material = "^7.2"
-jetblack-markdown = "^0.6"
-mike = "^1.1.1"
+[project.urls]
+Homepage = "https://rob-blackbourn.github.io/bareASGI-cors"
+Repository = "https://github.com/rob-blackbourn/bareASGI-cors"
+Issues = "https://github.com/rob-blackbourn/bareASGI-cors/issues"
 
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+# pylint
+[tool.pylint.main]
+py-version = "3.12"
+jobs = 4
+
+[tool.pylint.basic]
+good-names = ["i", "j", "k", "ex", "Run", "_"]
+bad-names = ["foo", "bar", "baz", "toto", "tutu", "tata"]
+
+[tool.pylint."messages control"]
+disable = [
+    "raw-checker-failed",
+    "bad-inline-option",
+    "locally-disabled",
+    "file-ignored",
+    "suppressed-message",
+    "useless-suppression",
+    "deprecated-pragma",
+    "use-symbolic-message-instead",
+    "use-implicit-booleaness-not-comparison-to-string",
+    "use-implicit-booleaness-not-comparison-to-zero",
+    "missing-module-docstring",
+]
+
+# pytest
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "function"
+
+# mypy
+[tool.mypy]
+files = [ "src", "tests", "examples" ]
+
+[[tool.mypy.overrides]]
+module = "pytest"
+ignore_missing_imports = true
