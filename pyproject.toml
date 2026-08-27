@@ -1,6 +1,6 @@
 [project]
 name = "bareasgi-cors"
-version = "4.1.0"
+version = "5.0.0.alpha.0"
 description = "CORS support for bareasgi"
 authors = [
     { name = "Rob Blackbourn", email = "rob.blackbourn@gmail.com" }
