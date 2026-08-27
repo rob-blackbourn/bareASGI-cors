@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import AbstractSet, Iterable, Mapping
+from typing import AbstractSet, Final, Iterable, Mapping
 
 from bareasgi import (
     HttpRequestCallback,
@@ -13,7 +13,7 @@ from bareutils import text_writer, header
 
 ALL_METHODS = {"DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"}
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 type Header = tuple[bytes, bytes]
 
