@@ -1,6 +1,6 @@
 """Helper functions"""
 
-from typing import AbstractSet, Optional
+from typing import AbstractSet
 
 from bareasgi import Application
 
@@ -10,12 +10,12 @@ from .cors_provider import CORSMiddleware
 def add_cors_middleware(
         app: Application,
         *,
-        allow_origins: Optional[AbstractSet[str]] = None,
-        allow_methods: Optional[AbstractSet[str]] = None,
-        allow_headers: Optional[AbstractSet[str]] = None,
+        allow_origins: AbstractSet[str] | None = None,
+        allow_methods: AbstractSet[str] | None = None,
+        allow_headers: AbstractSet[str] | None = None,
         allow_credentials: bool = False,
-        allow_origin_regex: Optional[str] = None,
-        expose_headers: AbstractSet[str] = None,
+        allow_origin_regex: str | None = None,
+        expose_headers: AbstractSet[str] | None = None,
         max_age: int = 600
 ) -> Application:
     """Add the CORS middleware.
