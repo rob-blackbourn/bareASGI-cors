@@ -1,5 +1,0 @@
-[BASIC]
-good-names=logger,app,config,host
-
-[TYPECHECK]
-ignored-classes=easydict.EasyDict
